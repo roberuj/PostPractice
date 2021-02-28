@@ -1,5 +1,6 @@
 package com.example.springboot;
 
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +17,20 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.when;   // ...or...
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;  
 
 
 import com.example.domain.Post;
 import com.example.restClient.PostClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,7 +45,14 @@ public class PostMockTester {
 	@Autowired	
 	PostClient postClient;
 	
-	
+	@Value("${example.jsonPath}")
+	private String jsonPath;
+	@Value("${example.postJsonFile}")
+	private String postJsonFile;
+	@Value("${example.postXmlFile}")
+	private String postXmlFile;
+	@Value("${example.xmlPath}")
+	private String xmlPath;
 	
 	@Value("${example.baseUrl}")
 	private String baseUrl;
@@ -92,13 +105,17 @@ public class PostMockTester {
 	@Test
 	@DisplayName("Testing a existent user with 10 post and 5 comments per post")
 	public void testGetPostsReal() {
-		Post mockPost = new Post();
-		mockPost.setBody(".......");
-		mockPost.setId(1);
-		mockPost.setTitle("stardust explosion");
-		mockPost.setUserId(100);
-		ArrayList<Post> postList = new ArrayList<Post>();
-		postList.add(mockPost);
+		ObjectMapper mapper = new ObjectMapper();
+		Post[] postArray = null;
+		try {
+			postArray = mapper.readValue(new File(jsonPath+postJsonFile), Post[].class);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		List<Post> postList = new ArrayList<Post>();
+		Collections.addAll(postList, postArray);
+		
 		
 		when(webClient.get())
         .thenReturn(requestHeadersUriSpecMock);
