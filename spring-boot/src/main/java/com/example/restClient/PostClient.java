@@ -66,26 +66,15 @@ public class PostClient {
 	 * @return the list of post by that user
 	 */
 	public Mono<List<Post>> getPostsByUser(int id){
+		logger.info("inside postsbyuser");
+		if (webClient == null)
+			logger.info("is null");
 		Mono<List<Post>> promiseReply = webClient.get()
 				.uri(baseUrl+urlSuffix,id)
-				//.retrieve()
-				.exchange()
-				.flatMap(clientResponse->{
-					if(clientResponse.statusCode().is2xxSuccessful()) {
-	        		   logger.info("CALL OK. StatusCode: " + clientResponse.statusCode());
-	        		   return clientResponse.bodyToMono(new ParameterizedTypeReference<List<Post>>() {});
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<List<Post>>() {});
 		        				   
-		        	}
-		        	   else {
-		        		   logger.debug("CALL KO. StatusCode: " + clientResponse.statusCode());
-		        		   clientResponse.body((clientHttpResponse, context) -> clientHttpResponse.getBody().
-		        					subscribe(body -> {
-		        						logger.debug("StatusCode: " + clientResponse.statusCode() + " body: " + body);
-		        					}
-		        			));	        		   
-		        		   return Mono.error(new IllegalStateException());
-		        	   }
-		        	  });
+		        	
 				
 				
 		
