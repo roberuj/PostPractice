@@ -48,6 +48,8 @@ public class PostsUserService {
 	private String jsonPath;
 	@Value("${example.postJsonFile}")
 	private String postJsonFile;
+	@Value("${example.postCommentJsonFile}")
+	private String postCommentJsonFile;
 	@Value("${example.postXmlFile}")
 	private String postXmlFile;
 	@Value("${example.xmlPath}")
@@ -110,6 +112,12 @@ public class PostsUserService {
 				commentByPost.setPostTitle(post.getTitle());
 				commentByPost.setCommentsNumber(commentList.size());
 				commentsByPostList.add(commentByPost);
+				try {
+					mapper.writeValue(new File(jsonPath+postCommentJsonFile), commentList );
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					logger.info("Comment json couldn't have been generated");;
+				}
 				return Mono.just(commentByPost);
 			});
 		});

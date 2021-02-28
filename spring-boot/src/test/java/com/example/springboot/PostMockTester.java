@@ -1,6 +1,7 @@
 package com.example.springboot;
 
 import org.assertj.core.util.Arrays;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static org.mockito.Mockito.*;  
+import static org.mockito.Mockito.*;
 
-
+import com.example.domain.Comment;
+import com.example.domain.CommentsByPost;
 import com.example.domain.Post;
+import com.example.restClient.CommentClient;
 import com.example.restClient.PostClient;
+import com.example.service.PostsUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Mono;
@@ -53,6 +57,8 @@ public class PostMockTester {
 	private String postXmlFile;
 	@Value("${example.xmlPath}")
 	private String xmlPath;
+	@Value("${example.postCommentJsonFile}")
+	private String postCommentJsonFile;
 	
 	@Value("${example.baseUrl}")
 	private String baseUrl;
@@ -60,55 +66,40 @@ public class PostMockTester {
 	@Value("${example.post.user.urlSuffix}")
 	private String urlSuffix;
 	
+	@Value("${example.comments.user.urlSuffix}")
+	private String urlCommentSuffix;
+	
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersUriSpec requestHeadersUriSpecMock;	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecMock;
 	@Mock
 	private WebClient.ResponseSpec responseSpecMock;
+	@SuppressWarnings("rawtypes")
+	@Mock
+	private WebClient.RequestHeadersSpec requestHeadersSpecMockComment;
+	@Mock
+	private WebClient.ResponseSpec responseSpecMockComment;
 	
+	@Autowired
+	PostsUserService postsUserService;
 	
-	@SuppressWarnings("unchecked")
-	@Test
-	@DisplayName("Testing the mock service")
-	public void testGetPosts() {
-		Post mockPost = new Post();
-		mockPost.setBody(".......");
-		mockPost.setId(1);
-		mockPost.setTitle("stardust explosion");
-		mockPost.setUserId(100);
-		ArrayList<Post> postList = new ArrayList<Post>();
-		postList.add(mockPost);
-		
-		when(webClient.get())
-        .thenReturn(requestHeadersUriSpecMock);
-      when(requestHeadersUriSpecMock.uri(baseUrl+urlSuffix, mockPost.getUserId()))
-        .thenReturn(requestHeadersSpecMock);
-      when(requestHeadersSpecMock.retrieve())
-        .thenReturn(responseSpecMock);
-      when(responseSpecMock.bodyToMono(new ParameterizedTypeReference<List<Post>>() {}))
-        .thenReturn(Mono.just(postList));
-      Mono<List<Post>> mono = webClient
-    		  	.get()
-    		  	.uri(baseUrl+urlSuffix,mockPost.getUserId())
-    		  	.retrieve()
-    			.bodyToMono(new ParameterizedTypeReference<List<Post>>() {});
-      StepVerifier.create(mono)
-      .expectNextMatches(list -> list.get(0).getTitle()
-        .equals("stardust explosion"))
-      .verifyComplete();
-	}
+	@Autowired
+	CommentClient commentClient;
 	
 	@SuppressWarnings("unchecked")
+	
 	@Test
 	@DisplayName("Testing a existent user with 10 post and 5 comments per post")
 	public void testGetPostsReal() {
 		ObjectMapper mapper = new ObjectMapper();
 		Post[] postArray = null;
+		Comment[] commentArray = null;
 		try {
 			postArray = mapper.readValue(new File(jsonPath+postJsonFile), Post[].class);
+			commentArray = mapper.readValue(new File(jsonPath+postCommentJsonFile), Comment[].class);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,6 +107,8 @@ public class PostMockTester {
 		List<Post> postList = new ArrayList<Post>();
 		Collections.addAll(postList, postArray);
 		
+		List<Comment> commentList = new ArrayList<Comment>();
+		Collections.addAll(commentList, commentArray);
 		
 		when(webClient.get())
         .thenReturn(requestHeadersUriSpecMock);
@@ -125,12 +118,60 @@ public class PostMockTester {
         .thenReturn(responseSpecMock);
       when(responseSpecMock.bodyToMono(new ParameterizedTypeReference<List<Post>>() {}))
         .thenReturn(Mono.just(postList));
+      when(requestHeadersUriSpecMock.uri(baseUrl+urlCommentSuffix, 1))
+      .thenReturn(requestHeadersSpecMockComment);
+	    when(requestHeadersSpecMockComment.retrieve())
+	      .thenReturn(responseSpecMockComment);
+	    when(responseSpecMockComment.bodyToMono(new ParameterizedTypeReference<List<Comment>>() {}))
+	      .thenReturn(Mono.just(commentList));
       
-      Mono<List<Post>> mono = postClient.getPostsByUser(100);
-      List<Post> posts = mono.block();
+      Mono<List<Post>> monoPost = postClient.getPostsByUser(100);
+      Mono<List<Comment>> monoComment  = commentClient.getCommentsByPost(1);
+      List<Post> posts = monoPost.block();
+      List<Comment> comments = monoComment.block();
+      List<CommentsByPost> list = null;
+		try {
+			list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
       /*StepVerifier.create(mono)
       .expectNextMatches(list -> list.get(0).getTitle()
         .equals("stardust explosion"))
       .verifyComplete();*/
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Disabled
+	@Test
+	@DisplayName("Testing comments")
+	public void testGetcommentsReal() {
+		ObjectMapper mapper = new ObjectMapper();
+		Post[] postArray = null;
+		Comment[] commentArray = null;
+		try {
+			postArray = mapper.readValue(new File(jsonPath+postJsonFile), Post[].class);
+			commentArray = mapper.readValue(new File(jsonPath+postCommentJsonFile), Comment[].class);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		List<Post> postList = new ArrayList<Post>();
+		Collections.addAll(postList, postArray);
+		
+		List<Comment> commentList = new ArrayList<Comment>();
+		Collections.addAll(commentList, commentArray);
+		when(webClient.get())
+        .thenReturn(requestHeadersUriSpecMock);
+      when(requestHeadersUriSpecMock.uri(baseUrl+urlCommentSuffix, 1))
+        .thenReturn(requestHeadersSpecMockComment);
+      when(requestHeadersSpecMockComment.retrieve())
+        .thenReturn(responseSpecMockComment);
+      when(responseSpecMockComment.bodyToMono(new ParameterizedTypeReference<List<Comment>>() {}))
+        .thenReturn(Mono.just(commentList));
+      Mono<List<Comment>> monoComment  = commentClient.getCommentsByPost(1);
+      List<Comment> comments = monoComment.block();
 	}
 }
