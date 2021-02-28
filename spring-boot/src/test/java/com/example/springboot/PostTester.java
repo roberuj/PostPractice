@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,27 +55,8 @@ public class PostTester {
 	@Value("${example.xmlPath}")
 	private String xmlPath;
 	
-	@Test
-	@DisplayName("Testing a existent user with 10 post and 5 comments per post")
-	public void testGetPosts() {
-		
-		
-		
-		List<CommentsByPost> list = null;
-		try {
-			list = postsUserService.getCommentsByPostUser("1").toStream().collect(Collectors.toList());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		assertEquals(list.size(), 10);
-		list.forEach(comments->{
-			assertNotEquals(comments, null);
-			assertEquals(comments.getCommentsNumber(), 5);
-			assertEquals(StringUtils.hasText(comments.getPostTitle()),true);
-		});
-	}
 	
+	@Disabled
 	@Test
 	@DisplayName("Testing a inexistent user and verify the response is empty")
 	public void testEmptyOnes() {
@@ -117,5 +99,26 @@ public class PostTester {
 		File file = new File(xmlPath+postXmlFile);
 		assertEquals(file.exists(),true);
 		assertEquals(file.length()>0,true);
+	}
+	
+	@Test
+	@DisplayName("Testing a existent user with 10 post and 5 comments per post")
+	public void testGetPosts() {
+		
+		
+		
+		List<CommentsByPost> list = null;
+		try {
+			list = postsUserService.getCommentsByPostUser("1").toStream().collect(Collectors.toList());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		assertEquals(list.size(), 10);
+		list.forEach(comments->{
+			assertNotEquals(comments, null);
+			assertEquals(comments.getCommentsNumber(), 5);
+			assertEquals(StringUtils.hasText(comments.getPostTitle()),true);
+		});
 	}
 }
