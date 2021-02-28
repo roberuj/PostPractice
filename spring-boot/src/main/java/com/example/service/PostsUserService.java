@@ -81,14 +81,16 @@ public class PostsUserService {
 			/*the call return one Mono of the List type, we can't loop it directly. we use flatmapiterable to transform the list into flux.
 			 * By the way, we export the files
 			 */
-			try {
-				mapper.writeValue(new File(jsonPath+postJsonFile), posts );
-				xmlMapper.writeValue(new File(xmlPath+postXmlFile), posts );
-			} catch (IOException e) {
-				//We decided  not to stop the execution because we couldn't generate the xml.But in the real life depends on user requeriments.
-				//We could add a warning list in the response (by now is a stream but we could convert into other class)
-				//e.printStackTrace();
-				logger.info("XML, json couldn't have been generated");
+			if (posts.size()>0) {//if the response is empty we don't want to sabe a empty file
+				try {
+					mapper.writeValue(new File(jsonPath+postJsonFile), posts );
+					xmlMapper.writeValue(new File(xmlPath+postXmlFile), posts );
+				} catch (IOException e) {
+					//We decided  not to stop the execution because we couldn't generate the xml.But in the real life depends on user requeriments.
+					//We could add a warning list in the response (by now is a stream but we could convert into other class)
+					//e.printStackTrace();
+					logger.info("XML, json couldn't have been generated");
+				}
 			}
 			return posts;
 		}).flatMap(post->{

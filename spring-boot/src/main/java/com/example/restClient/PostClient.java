@@ -66,9 +66,6 @@ public class PostClient {
 	 * @return the list of post by that user
 	 */
 	public Mono<List<Post>> getPostsByUser(int id){
-		logger.info("inside postsbyuser");
-		if (webClient == null)
-			logger.info("is null");
 		Mono<List<Post>> promiseReply = webClient.get()
 				.uri(baseUrl+urlSuffix,id)
 				.retrieve()
