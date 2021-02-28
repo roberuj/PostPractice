@@ -41,10 +41,14 @@ public class PostClient {
 	
 	@Value("${example.post.user.urlSuffix}")
 	private String urlSuffix;
+	static final Logger logger = LoggerFactory.getLogger(PostClient.class);
 	
 	
-	
-	
+	/*
+	 * Call the rest service "Get a post by post id". We are not using this method
+	 * @id post Id
+	 * @return the completed post with its attributes
+	 */
 	
 	public Post getPostById(String id) {
 		Mono<Post> reply = webClient.get()
@@ -56,16 +60,42 @@ public class PostClient {
 		return post;
 		
 	}
-	
+	/*
+	 * Call the rest service "Get the posts by user". 
+	 * @id UserId
+	 * @return the list of post by that user
+	 */
 	public Mono<List<Post>> getPostsByUser(int id){
 		Mono<List<Post>> promiseReply = webClient.get()
 				.uri(baseUrl+urlSuffix,id)
-				.retrieve()
-				.bodyToMono(new ParameterizedTypeReference<List<Post>>() {});
+				//.retrieve()
+				.exchange()
+				.flatMap(clientResponse->{
+					if(clientResponse.statusCode().is2xxSuccessful()) {
+	        		   logger.info("CALL OK. StatusCode: " + clientResponse.statusCode());
+	        		   return clientResponse.bodyToMono(new ParameterizedTypeReference<List<Post>>() {});
+		        				   
+		        	}
+		        	   else {
+		        		   logger.debug("CALL KO. StatusCode: " + clientResponse.statusCode());
+		        		   clientResponse.body((clientHttpResponse, context) -> clientHttpResponse.getBody().
+		        					subscribe(body -> {
+		        						logger.debug("StatusCode: " + clientResponse.statusCode() + " body: " + body);
+		        					}
+		        			));	        		   
+		        		   return Mono.error(new IllegalStateException());
+		        	   }
+		        	  });
+				
+				
 		
 		return promiseReply;
 	}
-	
+	/*
+	 * Call the rest service Delete post. 
+	 * @id the post Id that we want to delete
+	 * @return the deleted post
+	 */
 	public void deletePost(String id) {
 		Mono<Void> reply = webClient.delete()
 				.uri("https://jsonplaceholder.typicode.com/posts/{id}",id)

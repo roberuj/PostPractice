@@ -20,6 +20,11 @@ public class CommentClient {
 	
 	@Value("${example.comments.user.urlSuffix}")
 	private String urlSuffix;
+	/*
+	 * Call the rest service "Get comments by post". 
+	 * @id postId
+	 * @return the list of comments by that post
+	 */
 	public Mono<List<Comment>> getCommentsByPost(int id){
 		Mono<List<Comment>> promiseReply = webClient.get()
 				.uri(baseUrl+urlSuffix,id)
