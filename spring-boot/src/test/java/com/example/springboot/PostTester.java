@@ -103,7 +103,7 @@ public class PostTester {
 	
 	@Test
 	@DisplayName("Testing a existent user with 10 post and 5 comments per post")
-	public void testGetPosts() {
+	public void testGetPostsandCommentsByUser() {
 		
 		
 		
