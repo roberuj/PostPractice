@@ -76,6 +76,7 @@ public class PostsUserService {
 			throw new UserFormatException(userId);
 		}
 		Flux<CommentsByPost> flux = postClient.getPostsByUser(userAdIntegerid)
+		//exception control. we could extend to more kind of exceptions
 		.onErrorMap(t -> t instanceof WebClientRequestException, t -> new UserConnectionException())
 		.flatMapIterable(posts->{
 			/*the call return one Mono of the List type, we can't loop it directly. we use flatmapiterable to transform the list into flux.
