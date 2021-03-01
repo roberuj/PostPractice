@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -58,7 +60,7 @@ import reactor.test.StepVerifier;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DisplayName ("Testing the PostTester class function")
-
+@TestInstance(Lifecycle.PER_CLASS)
 public class PostMockTester {
 	@MockBean
 	private WebClient webClient; 
@@ -66,12 +68,13 @@ public class PostMockTester {
 	PostClient postClient;
 	
 	
-	private final static String jsonPath = "c:\\inputs\\";
 	private final static String postJsonFile = "post.json";
 	private final static String postCommentJsonFile = "comment.json";
 	private final static String postNotExistentComment = "postNotExistentComment.json";
 	private final static String postCommentConnectionException = "postCommentConnectionException.json";
 	
+	@Value("${example.inputJsonPath}")
+	private String jsonPath;
 	@Value("${example.jsonPath}")
 	private String jsonPathOutput;
 	@Value("${example.postJsonFile}")
@@ -143,15 +146,15 @@ public class PostMockTester {
 	@Autowired
 	CommentClient commentClient;
 	
-	private static List<Post> postList = new ArrayList<Post>();
-	private static List<Comment> commentList = new ArrayList<Comment>();
-	private static List<Post> postWithEmptyCommentList = new ArrayList<Post>();
-	private static List<Post> postWithConnExceptionList = new ArrayList<Post>();
+	private List<Post> postList = new ArrayList<Post>();
+	private List<Comment> commentList = new ArrayList<Comment>();
+	private List<Post> postWithEmptyCommentList = new ArrayList<Post>();
+	private List<Post> postWithConnExceptionList = new ArrayList<Post>();
 	
 
 	
 	@BeforeAll
-	public static void loadMocksContent() {
+	public void loadMocksContent() {
 		ObjectMapper mapper = new ObjectMapper();
 		Post[] postArray = null;
 		Comment[] commentArray = null;
