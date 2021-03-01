@@ -67,12 +67,12 @@ public class PostMockTester {
 	@Autowired	
 	PostClient postClient;
 	
-	
+	//mock data files
 	private final static String postJsonFile = "post.json";
 	private final static String postCommentJsonFile = "comment.json";
 	private final static String postNotExistentComment = "postNotExistentComment.json";
 	private final static String postCommentConnectionException = "postCommentConnectionException.json";
-	
+	//files paths
 	@Value("${example.inputJsonPath}")
 	private String jsonPath;
 	@Value("${example.jsonPath}")
@@ -83,7 +83,7 @@ public class PostMockTester {
 	private String postXmlFile;
 	@Value("${example.xmlPath}")
 	private String xmlPath;
-	
+	//url
 	@Value("${example.baseUrl}")
 	private String baseUrl;
 	
@@ -93,6 +93,7 @@ public class PostMockTester {
 	@Value("${example.comments.user.urlSuffix}")
 	private String urlCommentSuffix;
 	
+	//mocking the normal situation
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersUriSpec requestHeadersUriSpecMock;	
@@ -107,12 +108,14 @@ public class PostMockTester {
 	@Mock
 	private WebClient.ResponseSpec responseSpecMockComment;
 	
+	//mocking the user doesn't any posts
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecEmptyPostMock;
 	@Mock
 	private WebClient.ResponseSpec responseSpecEmptyPostMock;
 	
+	//mocking a post with a no existent comment in the system
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecPostWithoutCommentMock;
@@ -123,17 +126,21 @@ public class PostMockTester {
 	private WebClient.RequestHeadersSpec requestHeadersSpecEmptyCommentMock;
 	@Mock
 	private WebClient.ResponseSpec responseSpecEmptyCommentMock;
+	
+	//mocking a connection exception when we are trying to request a post info.
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecExceptionPostMock;
 	@Mock
 	private WebClient.ResponseSpec responseSpecExceptionPostMock;
+	
+	//mocking a connection exception when we are trying to request the comment of a post
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecExceptionCommentMock;
 	@Mock
 	private WebClient.ResponseSpec responseSpecExceptionCommentMock;
-	
+	// to provoke the above exception we need a special post information
 	@SuppressWarnings("rawtypes")
 	@Mock
 	private WebClient.RequestHeadersSpec requestHeadersSpecThrowExceptionPostMock;
@@ -145,14 +152,15 @@ public class PostMockTester {
 	
 	@Autowired
 	CommentClient commentClient;
-	
+	//the files mock information is going to load in these files
 	private List<Post> postList = new ArrayList<Post>();
 	private List<Comment> commentList = new ArrayList<Comment>();
 	private List<Post> postWithEmptyCommentList = new ArrayList<Post>();
 	private List<Post> postWithConnExceptionList = new ArrayList<Post>();
 	
 
-	
+	//before start testing we load the json files (Only once)
+	// Every test start mocking the info that we need and then run the program and the assertions.
 	@BeforeAll
 	public void loadMocksContent() {
 		ObjectMapper mapper = new ObjectMapper();
