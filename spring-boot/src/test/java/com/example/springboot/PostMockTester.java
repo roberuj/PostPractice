@@ -255,11 +255,17 @@ public class PostMockTester {
 	@DisplayName("Testing we are controlling the connection problems when we are calling for getting posts by user")
 	public void testConnectionProblemwithPosts() {
 		String parameter = "4";
+		try {
+			StepVerifier.create(postsUserService.getCommentsByPostUser(parameter))
+			.expectErrorMatches(e -> ((e instanceof UserConnectionException) && (e.getMessage().equals("The host or the internet connection is down"))) )
+			//.expectErrorMatches(e -> (e instanceof UserConnectionException))	
+			//.expectError(UserConnectionException.class)
+				.verify();
+		} catch (AssertionError | Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		Throwable throable = assertThrows(Exception.class, ()-> postsUserService.getCommentsByPostUser(parameter).toStream().collect(Collectors.toList()));
-		assertNotEquals(throable.getCause(), null);
-		assertTrue(throable.getCause() instanceof UserConnectionException);
-		assertEquals("The host or the internet connection is down", throable.getCause().getMessage());
 	}
 	
 	@Test
