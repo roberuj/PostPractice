@@ -16,6 +16,8 @@
 
 	<properties>
 		<java.version>1.8</java.version>
+		<mockwebserver.version>4.7.2</mockwebserver.version>
+    	<okhttp3.version>4.7.2</okhttp3.version>
 	</properties>
 
 	<dependencies>
@@ -55,6 +57,11 @@
 			   <artifactId>mockito-all</artifactId>
 			   <version>1.9.5</version>
 		</dependency>
+		 <dependency>
+	      <groupId>com.squareup.okhttp3</groupId>
+	      <artifactId>mockwebserver</artifactId>
+	      <scope>test</scope>
+	    </dependency>
 		<!-- end::tests[] -->
 	</dependencies>
 

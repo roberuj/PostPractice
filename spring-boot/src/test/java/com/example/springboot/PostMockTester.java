@@ -59,7 +59,7 @@ import reactor.test.StepVerifier;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@DisplayName ("Testing the PostTester class function")
+@DisplayName ("Testing the PostMockTester class function")
 @TestInstance(Lifecycle.PER_CLASS)
 public class PostMockTester {
 	@MockBean

@@ -34,13 +34,13 @@ import reactor.netty.tcp.TcpClient;
 public class PostClient {
 
 	@Autowired
-	WebClient webClient;
+	protected WebClient webClient;
 	@Value("${example.baseUrl}")
-	private String baseUrl;
+	protected String baseUrl;
 	
 	
 	@Value("${example.post.user.urlSuffix}")
-	private String urlSuffix;
+	protected String urlSuffix;
 	static final Logger logger = LoggerFactory.getLogger(PostClient.class);
 	
 	
