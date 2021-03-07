@@ -7,7 +7,7 @@ import com.example.restClient.CommentClient;
 public class CommentClientMock extends CommentClient {
 	public CommentClientMock( String baseUrl, WebClient webClient) {
 		this.baseUrl = baseUrl;
-		this.urlSuffix = "";
+		this.urlSuffix = "/comments?postId={id}";
 		this.webClient = webClient;
 	}
 }

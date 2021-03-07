@@ -9,7 +9,7 @@ import com.example.restClient.PostClient;
 public class PostClientMock extends PostClient {
 	public PostClientMock( String baseUrl, WebClient webClient) {
 		this.baseUrl = baseUrl;
-		this.urlSuffix = "";
+		this.urlSuffix = "/posts?userId={id}";
 		this.webClient = webClient;
 	}
 }

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,11 +31,14 @@ import com.example.service.PostsUserService;
 import com.example.webmockutils.CommentClientMock;
 import com.example.webmockutils.PostClientMock;
 import com.example.webmockutils.PostsUserServiceMock;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restpractice.UserException.UserConnectionException;
 
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import reactor.test.StepVerifier;
 
 @SpringBootTest
@@ -112,14 +116,41 @@ public class PostWebMockWebTester {
 	@Test
 	@DisplayName("Testing a existent user with 1 post and 5 comments per post")
 	public void testGetPostsandCommentsByUser() throws Exception {
-		 List<CommentsByPost> list = null;
+		List<CommentsByPost> list = null;
 		ObjectMapper mapper = new ObjectMapper();
-		mockWebServer.enqueue(new MockResponse()
-	    	      .setBody(mapper.writeValueAsString(postList))
-	    	      .addHeader("Content-Type", "application/json"));
-		mockWebServer.enqueue(new MockResponse()
-	    	      .setBody(mapper.writeValueAsString(commentList))
-	    	      .addHeader("Content-Type", "application/json"));	
+		final Dispatcher dispatcher = new Dispatcher() {
+		    @Override
+		    public MockResponse dispatch(RecordedRequest request) {
+		      switch (request.getPath()) {
+		        case "/posts?userId=100":
+		          try {
+					return new MockResponse()
+							  .setResponseCode(200)
+							  .setBody(mapper.writeValueAsString(postList))
+						      .addHeader("Content-Type", "application/json");
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		        case "/posts?userId=200":
+		          return new MockResponse().setResponseCode(500);
+		        case "/comments?postId=1":
+		        	try {
+						return new MockResponse()
+						  .setResponseCode(200)
+						  .setBody(mapper.writeValueAsString(commentList))
+					      .addHeader("Content-Type", "application/json");
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		        	
+		      }
+		      return new MockResponse().setResponseCode(404);
+		    }
+		  };
+		  mockWebServer.setDispatcher(dispatcher);
+		
 		list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());		
 		
 		assertEquals(list.size(), 1);
@@ -129,6 +160,7 @@ public class PostWebMockWebTester {
 			assertEquals(StringUtils.hasText(comment.getPostTitle()),true);
 		});
 	}
+	@Disabled
 	@Test
 	@DisplayName("Testing we are controlling the connection problems when we are calling for getting posts by user")
 	public void testConnectionProblemwithPosts() throws Exception {
@@ -138,6 +170,13 @@ public class PostWebMockWebTester {
 			StepVerifier.create(postsUserService.getCommentsByPostUser(parameter))
 			.expectErrorMatches(e -> ((e instanceof UserConnectionException) && (e.getMessage().equals("The host or the internet connection is down"))) )
 			.verify();
+	}
+	@Test
+	@Disabled
+	public void testREsponses()  throws Exception  {
+		  
+		  List<CommentsByPost> list = null;
+		  list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());		
 	}
 	
 	
