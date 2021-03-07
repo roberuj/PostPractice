@@ -127,4 +127,8 @@ public class PostsUserService {
 		
 		return flux;
 	}
+	
+	public void setMockPostClient(PostClient postClient){
+		this.postClient = postClient;
+	}
 }

@@ -96,12 +96,19 @@ public class PostWebMockWebTester {
 	@DisplayName("Testing a existent user with 1 post and 5 comments per post")
 	public void testGetPostsandCommentsByUser() throws Exception {
 		 List<Post> list = null;
+		 List<CommentsByPost> listC = null;
 		ObjectMapper mapper = new ObjectMapper();
 		mockWebServer.enqueue(new MockResponse()
 	    	      .setBody(mapper.writeValueAsString(postList))
 	    	      .addHeader("Content-Type", "application/json"));
+		mockWebServer.enqueue(new MockResponse()
+	    	      .setBody(mapper.writeValueAsString(commentList))
+	    	      .addHeader("Content-Type", "application/json"));
 		try {
 			list = postClientMock.getPostsByUser(100).block();
+			postsUserService.setMockPostClient(postClientMock);
+			listC = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
