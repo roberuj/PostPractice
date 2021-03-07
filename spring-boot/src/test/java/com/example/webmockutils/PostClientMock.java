@@ -7,9 +7,9 @@ import com.example.restClient.PostClient;
 
 @SpringBootTest
 public class PostClientMock extends PostClient {
-	public PostClientMock(WebClient.Builder builder, String baseUrl) {
+	public PostClientMock( String baseUrl, WebClient webClient) {
 		this.baseUrl = baseUrl;
 		this.urlSuffix = "";
-		this.webClient = builder.build();
+		this.webClient = webClient;
 	}
 }

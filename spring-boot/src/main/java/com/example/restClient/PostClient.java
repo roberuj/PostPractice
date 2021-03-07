@@ -44,6 +44,7 @@ public class PostClient {
 	static final Logger logger = LoggerFactory.getLogger(PostClient.class);
 	
 	
+	
 	/*
 	 * Call the rest service "Get a post by post id". We are not using this method
 	 * @id post Id

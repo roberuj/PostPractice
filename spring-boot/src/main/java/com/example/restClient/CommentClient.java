@@ -14,12 +14,12 @@ import reactor.core.publisher.Mono;
 
 public class CommentClient {
 	@Autowired
-	WebClient webClient;
+	protected WebClient webClient;
 	@Value("${example.baseUrl}")
-	private String baseUrl;
+	protected String baseUrl;
 	
 	@Value("${example.comments.user.urlSuffix}")
-	private String urlSuffix;
+	protected String urlSuffix;
 	/*
 	 * Call the rest service "Get comments by post". 
 	 * @id postId

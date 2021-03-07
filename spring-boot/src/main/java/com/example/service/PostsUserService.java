@@ -37,12 +37,12 @@ public class PostsUserService {
 	 * we inject a RestClient object which wraps the Posts resource call
 	 */
 	@Autowired
-	PostClient postClient;
+	protected PostClient postClient;
 	/*
 	 * we inject a CommentClient object which wraps the Comments resource calls
 	 */
 	@Autowired
-	CommentClient commentClient;
+	protected CommentClient commentClient;
 	//load the file paths and name to export the json and xml
 	@Value("${example.jsonPath}")
 	private String jsonPath;

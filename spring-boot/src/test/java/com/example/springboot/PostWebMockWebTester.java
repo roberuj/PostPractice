@@ -1,5 +1,8 @@
 package com.example.springboot;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,24 +19,33 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.domain.Comment;
 import com.example.domain.CommentsByPost;
 import com.example.domain.Post;
+import com.example.restClient.PostClient;
 import com.example.service.PostsUserService;
+import com.example.webmockutils.CommentClientMock;
 import com.example.webmockutils.PostClientMock;
+import com.example.webmockutils.PostsUserServiceMock;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.restpractice.UserException.UserConnectionException;
 
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import reactor.test.StepVerifier;
 
 @SpringBootTest
 @DisplayName ("Testing the PostWebMockWebTester class function")
 @TestInstance(Lifecycle.PER_CLASS)
 public class PostWebMockWebTester {
-	private PostClientMock postClientMock;
+	private PostClient postClientMock;
+	private CommentClientMock commentClientMock;
 	private MockWebServer mockWebServer;
+	private PostsUserServiceMock postsUserService;
+	private WebClient webClient;
 	//mock data files
 	private final static String postJsonFile = "post.json";
 	private final static String postCommentJsonFile = "comment.json";
@@ -51,13 +63,15 @@ public class PostWebMockWebTester {
 	@Value("${example.xmlPath}")
 	private String xmlPath;
 	
+	@Value("${example.post.user.urlSuffix}")
+	protected String urlSuffix;
+	
 	private List<Post> postList = new ArrayList<Post>();
 	private List<Comment> commentList = new ArrayList<Comment>();
 	private List<Post> postWithEmptyCommentList = new ArrayList<Post>();
 	private List<Post> postWithConnExceptionList = new ArrayList<Post>();
 	
-	@Autowired
-	PostsUserService postsUserService;
+	
 	
 	//before start testing we load the json files (Only once)
 	// Every test start mocking the info that we need and then run the program and the assertions.
@@ -89,30 +103,42 @@ public class PostWebMockWebTester {
 	public void loadMock() throws IOException{
 		this.mockWebServer = new MockWebServer();
 	    this.mockWebServer.start();
-		postClientMock = new PostClientMock(WebClient.builder(),mockWebServer.url("/").toString());
+	    webClient = WebClient.builder().build();
+		postClientMock = new PostClientMock(mockWebServer.url("/").toString(),webClient);
+		commentClientMock = new CommentClientMock(mockWebServer.url("/").toString(),webClient);
+		postsUserService = new PostsUserServiceMock(postClientMock,commentClientMock);
 	}
 	
 	@Test
 	@DisplayName("Testing a existent user with 1 post and 5 comments per post")
 	public void testGetPostsandCommentsByUser() throws Exception {
-		 List<Post> list = null;
-		 List<CommentsByPost> listC = null;
+		 List<CommentsByPost> list = null;
 		ObjectMapper mapper = new ObjectMapper();
 		mockWebServer.enqueue(new MockResponse()
 	    	      .setBody(mapper.writeValueAsString(postList))
 	    	      .addHeader("Content-Type", "application/json"));
 		mockWebServer.enqueue(new MockResponse()
 	    	      .setBody(mapper.writeValueAsString(commentList))
-	    	      .addHeader("Content-Type", "application/json"));
-		try {
-			list = postClientMock.getPostsByUser(100).block();
-			postsUserService.setMockPostClient(postClientMock);
-			listC = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	    	      .addHeader("Content-Type", "application/json"));	
+		list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());		
+		
+		assertEquals(list.size(), 1);
+		list.forEach(comment->{
+			assertNotEquals(comment, null);
+			assertEquals(comment.getCommentsNumber(), 5);
+			assertEquals(StringUtils.hasText(comment.getPostTitle()),true);
+		});
 	}
+	@Test
+	@DisplayName("Testing we are controlling the connection problems when we are calling for getting posts by user")
+	public void testConnectionProblemwithPosts() throws Exception {
+		String parameter = "100";
+		postClientMock = new PostClientMock("/",webClient);
+		postsUserService = new PostsUserServiceMock(postClientMock,commentClientMock);
+			StepVerifier.create(postsUserService.getCommentsByPostUser(parameter))
+			.expectErrorMatches(e -> ((e instanceof UserConnectionException) && (e.getMessage().equals("The host or the internet connection is down"))) )
+			.verify();
+	}
+	
 	
 }
