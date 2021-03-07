@@ -30,9 +30,11 @@ import com.example.restClient.PostClient;
 import com.example.service.PostsUserService;
 import com.example.webmockutils.CommentClientMock;
 import com.example.webmockutils.PostClientMock;
+import com.example.webmockutils.PostDispatcher;
 import com.example.webmockutils.PostsUserServiceMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.restpractice.UserException.ServiceResponseException;
 import com.restpractice.UserException.UserConnectionException;
 
 import okhttp3.mockwebserver.Dispatcher;
@@ -50,6 +52,7 @@ public class PostWebMockWebTester {
 	private MockWebServer mockWebServer;
 	private PostsUserServiceMock postsUserService;
 	private WebClient webClient;
+	private PostDispatcher dispatcher;
 	//mock data files
 	private final static String postJsonFile = "post.json";
 	private final static String postCommentJsonFile = "comment.json";
@@ -101,6 +104,7 @@ public class PostWebMockWebTester {
 		Collections.addAll(commentList, commentArray);
 		Collections.addAll(postWithEmptyCommentList, postWithEmptyCommentArray);
 		Collections.addAll(postWithConnExceptionList, postWithConnectException);
+		dispatcher = new PostDispatcher(postList, commentList);
 	}
 	
 	@BeforeEach
@@ -117,39 +121,8 @@ public class PostWebMockWebTester {
 	@DisplayName("Testing a existent user with 1 post and 5 comments per post")
 	public void testGetPostsandCommentsByUser() throws Exception {
 		List<CommentsByPost> list = null;
-		ObjectMapper mapper = new ObjectMapper();
-		final Dispatcher dispatcher = new Dispatcher() {
-		    @Override
-		    public MockResponse dispatch(RecordedRequest request) {
-		      switch (request.getPath()) {
-		        case "/posts?userId=100":
-		          try {
-					return new MockResponse()
-							  .setResponseCode(200)
-							  .setBody(mapper.writeValueAsString(postList))
-						      .addHeader("Content-Type", "application/json");
-					} catch (JsonProcessingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-		        case "/posts?userId=200":
-		          return new MockResponse().setResponseCode(500);
-		        case "/comments?postId=1":
-		        	try {
-						return new MockResponse()
-						  .setResponseCode(200)
-						  .setBody(mapper.writeValueAsString(commentList))
-					      .addHeader("Content-Type", "application/json");
-					} catch (JsonProcessingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-		        	
-		      }
-		      return new MockResponse().setResponseCode(404);
-		    }
-		  };
-		  mockWebServer.setDispatcher(dispatcher);
+		
+		mockWebServer.setDispatcher(dispatcher);
 		
 		list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());		
 		
@@ -160,7 +133,7 @@ public class PostWebMockWebTester {
 			assertEquals(StringUtils.hasText(comment.getPostTitle()),true);
 		});
 	}
-	@Disabled
+	
 	@Test
 	@DisplayName("Testing we are controlling the connection problems when we are calling for getting posts by user")
 	public void testConnectionProblemwithPosts() throws Exception {
@@ -171,12 +144,18 @@ public class PostWebMockWebTester {
 			.expectErrorMatches(e -> ((e instanceof UserConnectionException) && (e.getMessage().equals("The host or the internet connection is down"))) )
 			.verify();
 	}
+	
 	@Test
-	@Disabled
+	@DisplayName("Testing we are controlling the erroneus http responses when we are calling for getting posts by user")
 	public void testREsponses()  throws Exception  {
-		  
-		  List<CommentsByPost> list = null;
-		  list = postsUserService.getCommentsByPostUser("100").toStream().collect(Collectors.toList());		
+		mockWebServer.setDispatcher(dispatcher);
+		StepVerifier.create(postsUserService.getCommentsByPostUser("300"))
+			.expectErrorMatches(e -> ((e instanceof ServiceResponseException) && (e.getMessage().equals("Incorrect response from server"))) )
+			.verify();
+		
+		StepVerifier.create(postsUserService.getCommentsByPostUser("200"))
+		.expectErrorMatches(e -> ((e instanceof ServiceResponseException) && (e.getMessage().equals("Incorrect response from server"))) )
+		.verify();
 	}
 	
 	

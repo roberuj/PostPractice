@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.example.domain.Comment;
 import com.example.domain.CommentsByPost;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.restpractice.UserException.ServiceResponseException;
 import com.restpractice.UserException.UserConnectionException;
 import com.restpractice.UserException.UserEmptyException;
 import com.restpractice.UserException.UserFormatException;
@@ -77,7 +79,7 @@ public class PostsUserService {
 		}
 		Flux<CommentsByPost> flux = postClient.getPostsByUser(userAdIntegerid)
 		//exception control. we could extend to more kind of exceptions
-		.onErrorMap(t -> t instanceof WebClientRequestException, t -> new UserConnectionException())
+		.onErrorMap(t -> serviceErrorHandle(t))
 		.flatMapIterable(posts->{
 			/*the call return one Mono of the List type, we can't loop it directly. we use flatmapiterable to transform the list into flux.
 			 * By the way, we export the files
@@ -128,7 +130,13 @@ public class PostsUserService {
 		return flux;
 	}
 	
-	public void setMockPostClient(PostClient postClient){
-		this.postClient = postClient;
+	public Throwable serviceErrorHandle(Throwable error){
+		if (error instanceof WebClientResponseException)
+			return new ServiceResponseException();
+		else if (error instanceof WebClientRequestException)
+			return new UserConnectionException();
+		else
+			return new IllegalStateException();
+			
 	}
 }
