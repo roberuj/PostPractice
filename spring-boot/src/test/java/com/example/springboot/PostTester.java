@@ -56,7 +56,7 @@ public class PostTester {
 	private String xmlPath;
 	
 	
-	@Disabled
+	
 	@Test
 	@DisplayName("Testing a inexistent user and verify the response is empty")
 	public void testEmptyOnes() {

@@ -78,8 +78,8 @@ public class PostsUserService {
 			throw new UserFormatException(userId);
 		}
 		Flux<CommentsByPost> flux = postClient.getPostsByUser(userAdIntegerid)
-		//exception control. we could extend to more kind of exceptions
-		.onErrorMap(t -> serviceErrorHandle(t))
+		//exception control. We could include  more kinds of exceptions
+		.onErrorMap(this::serviceErrorHandle)
 		.flatMapIterable(posts->{
 			/*the call return one Mono of the List type, we can't loop it directly. we use flatmapiterable to transform the list into flux.
 			 * By the way, we export the files
@@ -102,13 +102,14 @@ public class PostsUserService {
 			 */
 			return commentClient.getCommentsByPost(post.getId())
 			/*
-			 * When we find a connection problem, in spite of we can get partial answers, the whole process can't be completed, so 
+			 * When we find a connection problem or bad response, in spite of we can get partial answers, the whole process can't be completed, so 
 			 * we consider a partial result a wrong response here, therefore we interrupt the process, control the exception and throw 
 			 * our user Exception (Which is tested in unit test as a expected user exception). But in the real world, the user requirement
-			 * could be different from this.
+			 * could be different from this. In any case we let the code open to new handle implementations by distinguishing 
+			 * different kinds of errors
 			 */
-					
-			.onErrorMap(t -> t instanceof WebClientRequestException, t -> new UserConnectionException())
+				
+			.onErrorMap(this::serviceErrorHandle)
 			.flatMap(commentList->{
 				/*we have to get the comments of this post and create the record with the post name and the number of comments per post
 				 * we return this record as a mono type. The flatmap is going to build the flux of this records as a result
@@ -129,7 +130,11 @@ public class PostsUserService {
 		
 		return flux;
 	}
-	
+	/*
+	 * Is going to perform a multiple mapping exception
+	 * @error the original exception
+	 * @return our UserException
+	 */
 	public Throwable serviceErrorHandle(Throwable error){
 		if (error instanceof WebClientResponseException)
 			return new ServiceResponseException();

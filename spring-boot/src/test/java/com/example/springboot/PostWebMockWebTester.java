@@ -2,6 +2,7 @@ package com.example.springboot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,11 +37,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restpractice.UserException.ServiceResponseException;
 import com.restpractice.UserException.UserConnectionException;
+import com.restpractice.UserException.UserEmptyException;
+import com.restpractice.UserException.UserFormatException;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 @SpringBootTest
@@ -81,7 +85,8 @@ public class PostWebMockWebTester {
 	
 	
 	//before start testing we load the json files (Only once)
-	// Every test start mocking the info that we need and then run the program and the assertions.
+	// Every test start mocking the info that we need and then run the program and the assertions. We load our dispatcher hear but
+	//every case will choose if they want to use the dispatcher or not by using setDispatcher method of MockServer Object.
 	@BeforeAll
 	public void loadMocksContent() {
 		ObjectMapper mapper = new ObjectMapper();
@@ -157,6 +162,55 @@ public class PostWebMockWebTester {
 		.expectErrorMatches(e -> ((e instanceof ServiceResponseException) && (e.getMessage().equals("Incorrect response from server"))) )
 		.verify();
 	}
+	
+	@Test
+	@DisplayName("Testing a inexistent user and verify the response is empty")
+	public void testEmptyPost() {
+		List<CommentsByPost> list = null;
+		mockWebServer.setDispatcher(dispatcher);
+		try {
+			list = postsUserService.getCommentsByPostUser("150").toStream().collect(Collectors.toList());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		assertEquals(list.size(),0);
+	}
+	
+	
+
+	
+	@Test
+	@DisplayName("Verify the json file existence")
+	public void testJsonFileExistence() {
+		File file = new File(jsonPathOutput+postJsonFileOutput);
+		assertEquals(file.exists(),true);
+		assertEquals(file.length()>0,true);
+	}
+	
+	@Test
+	@DisplayName("Verify the xml file existence")
+	public void testXmlFileExistence() {
+		File file = new File(xmlPath+postXmlFile);
+		assertEquals(file.exists(),true);
+		assertEquals(file.length()>0,true);
+	}
+	
+	@Test
+	@DisplayName("Testing with a null value as a user and verify the system doesn't crash and an expected UserException is cought")
+	public void testUserNullValue() {
+		Throwable throable = assertThrows(UserEmptyException.class, ()-> postsUserService.getCommentsByPostUser(null).toStream());
+		assertEquals("user cannot be empty", throable.getMessage());
+	}
+	
+	@Test
+	@DisplayName("Testing with a wrong parameter format and verify the system doesn't crash and an expected UserException is cought")
+	public void testWrongParameterFormat() {
+		String parameter = "3a";
+		Throwable throable = assertThrows(UserFormatException.class, ()-> postsUserService.getCommentsByPostUser(parameter).toStream());
+		assertEquals("User format not valid, " + parameter, throable.getMessage());
+	}
+
 	
 	
 }

@@ -322,10 +322,6 @@ public class PostMockTester {
 			assertEquals(StringUtils.hasText(comment.getPostTitle()),true);
 		});
 		
-      /*StepVerifier.create(mono)
-      .expectNextMatches(list -> list.get(0).getTitle()
-        .equals("stardust explosion"))
-      .verifyComplete();*/
 	}
 	
 	
